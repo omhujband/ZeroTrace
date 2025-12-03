@@ -1,6 +1,6 @@
-# secure_wipe_app
+# ZeroTrace
 
-A new Flutter project.
+A data/media wiping app that cleans your data safely and securely.
 
 ## Getting Started
 
