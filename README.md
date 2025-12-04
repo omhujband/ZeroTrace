@@ -1,6 +1,43 @@
-# ZeroTrace
+# 🔐 ZeroTrace -- Secure File Wiping App
 
-A data/media wiping app that cleans your data safely and securely.
+<div align="center">
+
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=for-the-badge)
+
+**A privacy-first, secure data destruction app built with Flutter that
+makes deleted files unrecoverable.**
+
+[Features](#-features) • [Installation](#-installation) •
+[Screenshots](#-screenshots) • [Dependencies](#-dependencies)
+
+</div>
+
+------------------------------------------------------------------------
+
+## 📋 Table of Contents
+
+-   [About](#-about)
+-   [Features](#-features)
+-   [Direct Download Link](#-direct-download-link)
+-   [Installation](#-installation)
+    -   [Prerequisites](#prerequisites)
+    -   [Setup](#setup)
+    -   [Running the App](#running-the-app)
+-   [How It Works](#-how-it-works)
+    -   [Architecture](#architecture)
+    -   [Data Storage](#data-storage)
+    -   [Counter Types](#counter-types)
+-   [Dependencies](#-dependencies)
+-   [Screenshots](#-screenshots)
+-   [Project Structure](#-project-structure)
+-   [Future Enhancements](#-future-enhancements)
+-   [Contributing](#-contributing)
+
+------------------------------------------------------------------------
 
 
 <br>
@@ -173,12 +210,7 @@ Common Flutter dependencies may include: - `path_provider` -
 
 ## Screenshots
 
-*Add screenshots in `/assets/screenshots/` and reference them here.*
-
-Example:
-
-    ![Home Screen](assets/screenshots/home.png)
-    ![Wipe Progress](assets/screenshots/wipe_progress.png)
+*Will be added in future*
 
 <br>
 
@@ -215,11 +247,17 @@ lib/
 ## Future Enhancements
 
 -   🧹 Full‑drive wiping (internal + SD card)
+
 -   🔄 Background wipe queue
+
 -   📊 Analytics dashboard (on‑device only)
+
 -   🔑 Encrypted wipe certificates
+
 -   🌐 Multi‑language support
+
 -   🤖 AI-based file sensitivity detection (all offline)
+
 
 <br>
 
@@ -227,24 +265,30 @@ lib/
 
 Contributions, issues, and feature requests are welcome!
 
-1.  Fork the repository\
-2.  Create a branch: `git checkout -b feature-name`\
-3.  Commit changes: `git commit -m "Added feature"`\
-4.  Push: `git push origin feature-name`\
+1.  Fork the repository
+
+2.  Create a branch: `git checkout -b feature-name`
+
+3.  Commit changes: `git commit -m "Added feature"`
+
+4.  Push: `git push origin feature-name`
+
 5.  Open a pull request
 
 <br>
 
-## License
 
-This project is licensed under the MIT License.\
-See `LICENSE` file for details.
+## Show Your Support
 
-<br>
+Give a ⭐️ if this project helped you!
 
-## Contact
 
-For questions or collaboration:\
-**Your Name**\
-Email: your.email@example.com\
-GitHub: https://github.com/yourusername
+---
+
+<div align="center">
+
+**Made with ❤️ and Flutter**
+
+![Flutter](https://img.shields.io/badge/Made%20with-Flutter-blue?style=flat-square&logo=flutter)
+
+</div>
