@@ -6,7 +6,7 @@
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg?style=for-the-badge)
 
 **A privacy-first, secure data destruction app built with Flutter that
 makes deleted files unrecoverable.**
@@ -81,7 +81,7 @@ devices, ensuring complete privacy and erasure of their personal data.
 
 The app .apk file can be downloaded form the below link,
 
-Download: [ZeroTrace.apk](https://github.com/omhujband/ZeroTrace/releases/download/v1.0.0.0/ZeroTrace.apk)
+Download: [ZeroTrace.apk](https://github.com/omhujband/ZeroTrace/releases/download/v2.0.0/ZeroTrace.apk)
 
 <br>
 
