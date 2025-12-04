@@ -20,10 +20,10 @@ makes deleted files unrecoverable.**
 
 ## 📋 Table of Contents
 
--   [About](#-about)
--   [Features](#-features)
--   [Direct Download Link](#-direct-download-link)
--   [Installation](#-installation)
+-   [About](#about)
+-   [Features](#features)
+-   [Direct Download Link](#direct-download-link)
+-   [Installation](#installation)
     -   [Prerequisites](#prerequisites)
     -   [Setup](#setup)
     -   [Running the App](#running-the-app)
