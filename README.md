@@ -11,8 +11,8 @@
 **A privacy-first, secure data destruction app built with Flutter that
 makes deleted files unrecoverable.**
 
-[Features](#-features) • [Installation](#-installation) •
-[Screenshots](#-screenshots) • [Dependencies](#-dependencies)
+[Features](#features) • [Installation](#installation) •
+[Screenshots](#screenshots) • [Dependencies](#dependencies)
 
 </div>
 
@@ -27,15 +27,15 @@ makes deleted files unrecoverable.**
     -   [Prerequisites](#prerequisites)
     -   [Setup](#setup)
     -   [Running the App](#running-the-app)
--   [How It Works](#-how-it-works)
+-   [How It Works](#how-it-works)
     -   [Architecture](#architecture)
     -   [Data Storage](#data-storage)
     -   [Counter Types](#counter-types)
--   [Dependencies](#-dependencies)
--   [Screenshots](#-screenshots)
--   [Project Structure](#-project-structure)
--   [Future Enhancements](#-future-enhancements)
--   [Contributing](#-contributing)
+-   [Dependencies](#dependencies)
+-   [Screenshots](#screenshots)
+-   [Project Structure](#project-structure)
+-   [Future Enhancements](#future-enhancements)
+-   [Contributing](#contributing)
 
 ------------------------------------------------------------------------
 
@@ -191,8 +191,7 @@ flutter build apk --release
 
 ## Counter Types
 
-Used to count wipe passes: - **Single-pass counter** - **Triple-pass
-counter** - **7-pass DoD counter**
+Used to count wipe passes: - **Single-pass counter** - **Triple-pass counter** - **7-pass DoD counter**
 
 Used internally for tracking overwrite progress & certificate logging.
 
@@ -200,11 +199,28 @@ Used internally for tracking overwrite progress & certificate logging.
 
 ## Dependencies
 
-Common Flutter dependencies may include: - `path_provider` -
-`file_picker` - `permission_handler` - `flutter_pdf` / `pdf` - `crypto`
-(for SHA‑256) - `shared_preferences` (optional)
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  file_picker: ^8.0.0+1        
+  permission_handler: ^11.3.1   
+  pdf: ^3.10.8
+  path_provider: ^2.1.3
+  share_plus: ^9.0.0           
+  open_file: ^3.3.2
+  crypto: ^3.0.3
+  uuid: ^4.4.0
+  intl: ^0.19.0                 
+  shared_preferences: ^2.2.3
+  cupertino_icons: ^1.0.6
 
-(Actual dependencies depend on your project's `pubspec.yaml`.)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+```
 
 <br>
 
@@ -221,7 +237,7 @@ Common Flutter dependencies may include: - `path_provider` -
 lib/
 ├── main.dart                      # App entry point
 │
-├── models/
+├── models
 │   ├── certificate.dart           # Certificate data model
 │   ├── wipe_result.dart           # Wipe result & method models
 │   └── wiped_file.dart            # Wiped file tracking model
@@ -246,17 +262,17 @@ lib/
 
 ## Future Enhancements
 
--   🧹 Full‑drive wiping (internal + SD card)
+-   Full‑drive wiping (internal + SD card)
 
--   🔄 Background wipe queue
+-   All Certificate management
 
--   📊 Analytics dashboard (on‑device only)
+-   Analytics dashboard (on‑device only)
 
--   🔑 Encrypted wipe certificates
+-   Encrypted wipe certificates
 
--   🌐 Multi‑language support
+-   Entire folders wiping
 
--   🤖 AI-based file sensitivity detection (all offline)
+-   AI-based file sensitivity detection (all offline)
 
 
 <br>
