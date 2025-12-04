@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../main.dart';
 import '../models/wipe_result.dart';
 import '../services/storage_service.dart';
 import 'wipe_progress_screen.dart';
@@ -17,10 +18,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<File> _selectedFiles = [];
   WipeMethod _selectedMethod = WipeMethod.standard;
+
   bool _hasPermission = false;
   bool _isCheckingPermission = true;
   int _pendingWipedFilesCount = 0;
-  String _permissionStatus = '';
+  String _statusMessage = '';
 
   final StorageService _storageService = StorageService();
 
@@ -28,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkPermissions();
+    _checkPermission();
     _loadPendingCount();
   }
 
@@ -38,165 +40,145 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // Re-check permissions when app resumes (user might have granted in settings)
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _checkPermissions();
+      _checkPermission();
     }
   }
 
   Future<void> _loadPendingCount() async {
-    final pending = await _storageService.getPendingWipedFiles();
-    setState(() {
-      _pendingWipedFilesCount = pending.length;
-    });
+    try {
+      final pending = await _storageService.getPendingWipedFiles();
+      setState(() {
+        _pendingWipedFilesCount = pending.length;
+      });
+    } catch (e) {
+      debugPrint('Error loading pending count: $e');
+    }
   }
 
-  Future<void> _checkPermissions() async {
+  Future<void> _checkPermission() async {
     setState(() {
       _isCheckingPermission = true;
-      _permissionStatus = 'Checking permissions...';
+      _statusMessage = 'Checking permissions...';
     });
 
     try {
       bool granted = false;
 
-      // Check if MANAGE_EXTERNAL_STORAGE is granted (Android 11+)
       if (await Permission.manageExternalStorage.isGranted) {
         granted = true;
-        setState(() => _permissionStatus = 'Full access granted');
-      } else {
-        // Try to check regular storage permission
-        final storageStatus = await Permission.storage.status;
-        if (storageStatus.isGranted) {
-          granted = true;
-          setState(() => _permissionStatus = 'Storage access granted');
-        }
+      } else if (await Permission.storage.isGranted) {
+        granted = true;
       }
 
-      // If not granted, check media permissions (Android 13+)
-      if (!granted) {
-        final photosStatus = await Permission.photos.status;
-        final videosStatus = await Permission.videos.status;
-
-        if (photosStatus.isGranted || videosStatus.isGranted) {
-          granted = true;
-          setState(() => _permissionStatus = 'Media access granted');
-        }
+      if (granted) {
+        granted = await _testDirectoryAccess();
       }
 
       setState(() {
         _hasPermission = granted;
         _isCheckingPermission = false;
+        _statusMessage = granted ? 'Permission granted' : 'Permission needed';
       });
     } catch (e) {
       debugPrint('Permission check error: $e');
       setState(() {
         _hasPermission = false;
         _isCheckingPermission = false;
-        _permissionStatus = 'Error checking permissions';
+        _statusMessage = 'Error checking permissions';
       });
     }
   }
 
-  Future<void> _requestPermissions() async {
+  Future<bool> _testDirectoryAccess() async {
+    try {
+      final testPaths = [
+        '/storage/emulated/0/Download',
+        '/storage/emulated/0/DCIM',
+        '/storage/emulated/0/Pictures',
+      ];
+
+      for (final path in testPaths) {
+        final dir = Directory(path);
+        if (await dir.exists()) {
+          try {
+            await dir.list().first;
+            return true;
+          } catch (e) {
+            continue;
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> _requestPermission() async {
     setState(() {
-      _permissionStatus = 'Requesting permissions...';
+      _statusMessage = 'Requesting permission...';
     });
 
     try {
-      // First, try requesting MANAGE_EXTERNAL_STORAGE (Android 11+)
-      // This opens a special settings page
-      final manageStatus = await Permission.manageExternalStorage.status;
+      final status = await Permission.manageExternalStorage.request();
 
-      if (manageStatus.isDenied || manageStatus.isPermanentlyDenied) {
-        // Show dialog explaining why we need this permission
-        final shouldRequest = await _showPermissionExplanationDialog();
+      if (status.isDenied || status.isPermanentlyDenied) {
+        if (mounted) {
+          final shouldOpen = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              icon: const Icon(Icons.folder_open, size: 48, color: Colors.blue),
+              title: const Text('Storage Access Required'),
+              content: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'ZeroTrace needs "All Files Access" to browse and wipe files.',
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    '1. Tap "Open Settings"\n'
+                    '2. Find "ZeroTrace"\n'
+                    '3. Enable "Allow access to manage all files"\n'
+                    '4. Return to this app',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Open Settings'),
+                ),
+              ],
+            ),
+          );
 
-        if (shouldRequest) {
-          // Request the permission - this will open settings
-          final result = await Permission.manageExternalStorage.request();
-
-          if (result.isDenied || result.isPermanentlyDenied) {
-            // Open app settings as fallback
+          if (shouldOpen == true) {
             await openAppSettings();
           }
         }
       }
 
-      // Also request regular storage permission for older Android
       await Permission.storage.request();
-
-      // Request media permissions for Android 13+
-      await [Permission.photos, Permission.videos, Permission.audio].request();
-
-      // Re-check after requesting
-      await _checkPermissions();
+      await _checkPermission();
     } catch (e) {
       debugPrint('Permission request error: $e');
       setState(() {
-        _permissionStatus = 'Error: $e';
+        _statusMessage = 'Error: $e';
       });
     }
   }
 
-  Future<bool> _showPermissionExplanationDialog() async {
-    return await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            icon: const Icon(Icons.folder_open, size: 48, color: Colors.blue),
-            title: const Text('Storage Access Required'),
-            content: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'To securely wipe files from your device, this app needs access to all files.',
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'You will be redirected to settings where you need to:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.looks_one, color: Colors.blue),
-                    SizedBox(width: 8),
-                    Expanded(child: Text('Find "ZeroTrace" app')),
-                  ],
-                ),
-                SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.looks_two, color: Colors.blue),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text('Enable "Allow access to manage all files"'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Open Settings'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-  }
-
   Future<void> _pickFiles() async {
-    // Double-check permission before browsing
     if (!_hasPermission) {
       _showSnackBar('Please grant storage permission first', isError: true);
       return;
@@ -338,12 +320,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
+  void _toggleTheme() {
+    final appState = ZeroTraceApp.of(context);
+    appState?.themeProvider.toggleTheme();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🔐 ZeroTrace'),
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.shield, size: 24),
+            SizedBox(width: 8),
+            Text('ZeroTrace'),
+          ],
+        ),
         actions: [
+          // Theme Toggle Button
+          IconButton(
+            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            tooltip: isDarkMode
+                ? 'Switch to Light Mode'
+                : 'Switch to Dark Mode',
+            onPressed: _toggleTheme,
+          ),
+
+          // Wiped Files Badge
           if (_pendingWipedFilesCount > 0)
             Stack(
               children: [
@@ -386,154 +392,88 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           const CircularProgressIndicator(),
           const SizedBox(height: 20),
-          Text(_permissionStatus, style: const TextStyle(color: Colors.grey)),
+          Text(_statusMessage, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
   }
 
   Widget _buildPermissionRequest() {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Icon
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.folder_off,
-                size: 64,
-                color: Colors.orange,
-              ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
+            child: const Icon(Icons.folder_off, size: 64, color: Colors.orange),
+          ),
 
-            const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-            // Title
-            const Text(
-              'Storage Access Required',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
+          const Text(
+            'Storage Access Required',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
 
-            const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
-            // Description
-            const Text(
-              'This app needs "All Files Access" permission to browse and securely wipe files from your device.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
+          const Text(
+            'ZeroTrace needs "All Files Access" permission to browse and securely wipe files from your device.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
 
-            const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
-            // Why Needed Section
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
-              ),
-              child: const Column(
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text(
-                        'Why is this needed?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '• Access files in Downloads, DCIM, Documents\n'
-                    '• Browse and select files to wipe\n'
-                    '• Securely overwrite file contents\n'
-                    '• Generate destruction certificates',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                ],
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _requestPermission,
+              icon: const Icon(Icons.security),
+              label: const Text('GRANT PERMISSION'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
               ),
             ),
+          ),
 
-            const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
-            // Grant Permission Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _requestPermissions,
-                icon: const Icon(Icons.security),
-                label: const Text('GRANT PERMISSION'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                ),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => openAppSettings(),
+              icon: const Icon(Icons.settings),
+              label: const Text('Open App Settings'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
               ),
             ),
+          ),
 
-            const SizedBox(height: 12),
+          const SizedBox(height: 12),
 
-            // Open Settings Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => openAppSettings(),
-                icon: const Icon(Icons.settings),
-                label: const Text('Open App Settings'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                ),
-              ),
-            ),
+          TextButton.icon(
+            onPressed: _checkPermission,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Check Again'),
+          ),
 
-            const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-            // Instructions for Settings
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '📋 Manual Steps:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8),
-                  Text('1. Open Settings'),
-                  Text('2. Go to Apps → ZeroTrace'),
-                  Text('3. Tap Permissions'),
-                  Text('4. Enable "Files and media" or "All files"'),
-                  Text('5. Return to this app'),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Status
-            Text(
-              'Status: $_permissionStatus',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-            ),
-          ],
-        ),
+          Text(
+            'Status: $_statusMessage',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
+        ],
       ),
     );
   }
@@ -541,7 +481,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _buildMainContent() {
     return Column(
       children: [
-        // Wipe Method Selection
         Container(
           margin: const EdgeInsets.all(16),
           child: Card(
@@ -587,7 +526,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
 
-        // Select Files Button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: SizedBox(
@@ -605,14 +543,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
         const SizedBox(height: 16),
 
-        // Selected Files
         Expanded(
           child: _selectedFiles.isEmpty
               ? _buildEmptyState()
               : _buildFilesList(),
         ),
 
-        // Wipe Button
         if (_selectedFiles.isNotEmpty)
           Container(
             padding: const EdgeInsets.all(16),
