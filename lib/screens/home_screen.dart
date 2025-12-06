@@ -7,6 +7,8 @@ import '../services/storage_service.dart';
 import 'wipe_progress_screen.dart';
 import 'wiped_files_screen.dart';
 import 'file_browser_screen.dart';
+import 'certificates_screen.dart';
+import 'undeleted_files_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String _statusMessage = '';
 
   final StorageService _storageService = StorageService();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -292,6 +295,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _navigateToWipedFiles() {
+    // Close drawer first
+    Navigator.pop(context);
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const WipedFilesScreen()),
@@ -325,12 +331,216 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     appState?.themeProvider.toggleTheme();
   }
 
+  void _openDrawer() {
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // DRAWER MENU
+  // ═══════════════════════════════════════════════════════════════
+
+  Widget _buildDrawer() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Drawer(
+      child: Column(
+        children: [
+          // ─────────────────────────────────────────────────────────
+          // SECTION 1: App Logo & Name
+          // ─────────────────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
+            decoration: BoxDecoration(
+              color: isDarkMode
+                  ? Colors.red.shade900.withOpacity(0.3)
+                  : Colors.red.shade50,
+            ),
+            child: Column(
+              children: [
+                // App Icon/Logo
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.shield,
+                    size: 45,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // App Name
+                const Text(
+                  'ZeroTrace',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Secure Data Wiping',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+
+          // ─────────────────────────────────────────────────────────
+          // SECTION 2: Certificate & Undeleted Tabs
+          // ─────────────────────────────────────────────────────────
+          const SizedBox(height: 10),
+
+          _buildDrawerItem(
+            icon: Icons.verified,
+            title: 'Certificates',
+            subtitle: 'View destruction certificates',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CertificatesScreen(),
+                ),
+              );
+            },
+          ),
+
+          _buildDrawerItem(
+            icon: Icons.folder_delete,
+            title: 'Undeleted Files',
+            subtitle: 'Manage wiped but kept files',
+            badge: _pendingWipedFilesCount > 0 ? _pendingWipedFilesCount : null,
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UndeletedFilesScreen(),
+                ),
+              ).then((_) => _loadPendingCount());
+            },
+          ),
+
+          const Divider(height: 30, indent: 20, endIndent: 20),
+
+          // ─────────────────────────────────────────────────────────
+          // SECTION 3: How to Use Guide
+          // ─────────────────────────────────────────────────────────
+          _buildDrawerItem(
+            icon: Icons.help_outline,
+            title: 'How to Use',
+            subtitle: 'Learn how to use ZeroTrace',
+            onTap: () {
+              Navigator.pop(context);
+              // TODO: Navigate to How to Use screen
+              _showSnackBar('How to Use Guide - Coming soon!');
+            },
+          ),
+
+          const Spacer(),
+
+          // ─────────────────────────────────────────────────────────
+          // BOTTOM: Version Info
+          // ─────────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              'Version 1.0.0',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    int? badge,
+  }) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: Colors.red, size: 22),
+      ),
+      title: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          ),
+          if (badge != null) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$badge',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+      ),
+      trailing: Icon(Icons.chevron_right, color: Colors.grey.shade400),
+      onTap: onTap,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      key: _scaffoldKey,
+
+      // ═══════════════════════════════════════════════════════════════
+      // DRAWER
+      // ═══════════════════════════════════════════════════════════════
+      drawer: _buildDrawer(),
+
+      // ═══════════════════════════════════════════════════════════════
+      // APP BAR
+      // ═══════════════════════════════════════════════════════════════
       appBar: AppBar(
+        // Hamburger Menu Button
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            tooltip: 'Menu',
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
+        ),
         title: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -348,35 +558,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 : 'Switch to Dark Mode',
             onPressed: _toggleTheme,
           ),
-
-          // Wiped Files Badge
-          if (_pendingWipedFilesCount > 0)
-            Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.folder_delete),
-                  tooltip: 'Wiped Files',
-                  onPressed: _navigateToWipedFiles,
-                ),
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$_pendingWipedFilesCount',
-                      style: const TextStyle(fontSize: 10, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
         ],
       ),
+
+      // ═══════════════════════════════════════════════════════════════
+      // BODY
+      // ═══════════════════════════════════════════════════════════════
       body: _isCheckingPermission
           ? _buildLoadingState()
           : !_hasPermission

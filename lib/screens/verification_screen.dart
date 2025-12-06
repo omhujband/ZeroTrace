@@ -92,7 +92,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
               // Title
               Text(
-                '🔍 Raw Data: ${result.fileName}',
+                'Raw Data: ${result.fileName}',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -184,7 +184,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('✅ Verify Data Destruction'),
+        title: const Text('Verify Data Destruction'),
         automaticallyImplyLeading: false,
       ),
       body: _isLoading

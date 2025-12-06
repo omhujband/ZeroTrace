@@ -7,21 +7,24 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import '../models/wipe_result.dart';
+import '../models/wiped_file.dart';
 import '../models/certificate.dart';
+import '../models/certificate_record.dart';
+import 'certificate_storage_service.dart';
 
 class CertificateService {
   final _uuid = const Uuid();
   final _dateFormat = DateFormat('dd/MM/yyyy HH:mm:ss');
+  final _certificateStorageService = CertificateStorageService();
 
-  /// Generate a certificate for deleted files
+  /// Generate a certificate for deleted files (immediate deletion)
   Future<WipeCertificate> generateCertificate(
     List<WipeResult> wipeResults,
     String wipeMethodName,
   ) async {
-    final certificateId = 'SWC-${_uuid.v4().toUpperCase().substring(0, 8)}';
+    final certificateId = 'ZT-${_uuid.v4().toUpperCase().substring(0, 8)}';
     final issuedAt = DateTime.now();
 
-    // Create summaries of wiped files
     final wipedFiles = wipeResults
         .where((r) => r.success)
         .map(
@@ -33,10 +36,8 @@ class CertificateService {
         )
         .toList();
 
-    // Get device info
     final deviceInfo = await _getDeviceInfo();
 
-    // Generate digital signature
     final dataToSign = jsonEncode({
       'certificateId': certificateId,
       'files': wipedFiles.map((f) => f.toJson()).toList(),
@@ -55,9 +56,48 @@ class CertificateService {
     );
   }
 
+  /// Generate certificate for delayed deletion (wiped files deleted later)
+  Future<WipeCertificate> generateDelayedCertificate(
+    List<WipedFile> wipedFiles,
+    String wipeMethodName,
+  ) async {
+    final certificateId = 'ZT-${_uuid.v4().toUpperCase().substring(0, 8)}';
+    final issuedAt = DateTime.now();
+
+    final files = wipedFiles
+        .map(
+          (f) => WipeResultSummary(
+            fileName: f.fileName,
+            fileSize: f.originalSize,
+            wipedAt: f.wipedAt,
+          ),
+        )
+        .toList();
+
+    final deviceInfo = await _getDeviceInfo();
+
+    final dataToSign = jsonEncode({
+      'certificateId': certificateId,
+      'files': files.map((f) => f.toJson()).toList(),
+      'issuedAt': issuedAt.toIso8601String(),
+      'method': wipeMethodName,
+      'delayedDeletion': true,
+    });
+    final digitalSignature = sha256.convert(utf8.encode(dataToSign)).toString();
+
+    return WipeCertificate(
+      certificateId: certificateId,
+      wipedFiles: files,
+      wipeMethod: wipeMethodName,
+      issuedAt: issuedAt,
+      deviceInfo: deviceInfo,
+      digitalSignature: digitalSignature,
+    );
+  }
+
   /// Save certificate as JSON
   Future<String> saveAsJson(WipeCertificate certificate) async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await _getCertificatesDirectory();
     final filePath =
         '${directory.path}/certificate_${certificate.certificateId}.json';
 
@@ -69,9 +109,69 @@ class CertificateService {
     return filePath;
   }
 
-  /// Generate PDF certificate
+  /// Generate PDF certificate (standard - immediate deletion)
   Future<String> saveAsPdf(WipeCertificate certificate) async {
+    return await _generatePdf(
+      certificate: certificate,
+      isDelayedDeletion: false,
+      wipedAt: null,
+      deletedAt: certificate.issuedAt,
+    );
+  }
+
+  /// Generate PDF certificate (delayed deletion - with time difference)
+  Future<String> saveAsDelayedPdf(
+    WipeCertificate certificate,
+    DateTime wipedAt,
+    DateTime deletedAt,
+  ) async {
+    return await _generatePdf(
+      certificate: certificate,
+      isDelayedDeletion: true,
+      wipedAt: wipedAt,
+      deletedAt: deletedAt,
+    );
+  }
+
+  Future<String> _generatePdf({
+    required WipeCertificate certificate,
+    required bool isDelayedDeletion,
+    DateTime? wipedAt,
+    required DateTime deletedAt,
+  }) async {
     final pdf = pw.Document();
+
+    // Calculate time difference for delayed deletion
+    String? timeDifference;
+    if (isDelayedDeletion && wipedAt != null) {
+      final diff = deletedAt.difference(wipedAt);
+      if (diff.inSeconds > 0) {
+        final totalSeconds = diff.inSeconds;
+        final days = totalSeconds ~/ 86400;
+        final hours = (totalSeconds % 86400) ~/ 3600;
+        final minutes = (totalSeconds % 3600) ~/ 60;
+        final seconds = totalSeconds % 60;
+
+        final parts = <String>[];
+
+        if (days > 0) {
+          parts.add('$days day${days > 1 ? 's' : ''}');
+        }
+        if (hours > 0) {
+          parts.add('$hours hour${hours > 1 ? 's' : ''}');
+        }
+        if (minutes > 0) {
+          parts.add('$minutes minute${minutes > 1 ? 's' : ''}');
+        }
+        if (seconds > 0) {
+          parts.add('$seconds second${seconds > 1 ? 's' : ''}');
+        }
+
+        timeDifference = parts.join(' ');
+      } else {
+        timeDifference = 'Immediate';
+      }
+    }
 
     pdf.addPage(
       pw.Page(
@@ -88,22 +188,30 @@ class CertificateService {
                     pw.Container(
                       padding: const pw.EdgeInsets.all(10),
                       decoration: pw.BoxDecoration(
-                        border: pw.Border.all(color: PdfColors.green, width: 2),
+                        border: pw.Border.all(color: PdfColors.red, width: 2),
                         borderRadius: pw.BorderRadius.circular(10),
                       ),
                       child: pw.Text(
-                        'SECURE DATA WIPE CERTIFICATE',
+                        'ZEROTRACE',
                         style: pw.TextStyle(
-                          fontSize: 18,
+                          fontSize: 24,
                           fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.green800,
+                          color: PdfColors.red,
                         ),
+                      ),
+                    ),
+                    pw.SizedBox(height: 10),
+                    pw.Text(
+                      'CERTIFICATE OF DATA DESTRUCTION',
+                      style: pw.TextStyle(
+                        fontSize: 16,
+                        fontWeight: pw.FontWeight.bold,
                       ),
                     ),
                     pw.SizedBox(height: 5),
                     pw.Text(
-                      'Certificate of Data Destruction',
-                      style: const pw.TextStyle(fontSize: 12),
+                      'Secure Data Wiping Verification',
+                      style: const pw.TextStyle(fontSize: 10),
                     ),
                   ],
                 ),
@@ -115,10 +223,25 @@ class CertificateService {
 
               // Certificate Info
               _buildPdfInfoRow('Certificate ID:', certificate.certificateId),
-              _buildPdfInfoRow(
-                'Issue Date:',
-                _dateFormat.format(certificate.issuedAt),
-              ),
+
+              // Show different dates for delayed deletion
+              if (isDelayedDeletion && wipedAt != null) ...[
+                _buildPdfInfoRow('Data Wiped At:', _dateFormat.format(wipedAt)),
+                _buildPdfInfoRow(
+                  'Data Deleted At:',
+                  _dateFormat.format(deletedAt),
+                ),
+                _buildPdfInfoRow(
+                  'Time Between Wipe & Delete:',
+                  timeDifference ?? 'N/A',
+                ),
+              ] else ...[
+                _buildPdfInfoRow(
+                  'Issue Date:',
+                  _dateFormat.format(certificate.issuedAt),
+                ),
+              ],
+
               _buildPdfInfoRow('Wipe Method:', certificate.wipeMethod),
               _buildPdfInfoRow('Device:', certificate.deviceInfo),
               _buildPdfInfoRow(
@@ -153,7 +276,6 @@ class CertificateService {
                   2: const pw.FlexColumnWidth(2),
                 },
                 children: [
-                  // Header row
                   pw.TableRow(
                     decoration: const pw.BoxDecoration(
                       color: PdfColors.grey300,
@@ -164,7 +286,6 @@ class CertificateService {
                       _tableCell('Wiped At', isHeader: true),
                     ],
                   ),
-                  // Data rows
                   ...certificate.wipedFiles.map(
                     (file) => pw.TableRow(
                       children: [
@@ -225,11 +346,11 @@ class CertificateService {
                     ),
                     pw.SizedBox(height: 10),
                     pw.Text(
-                      'Generated by Secure Data Wipe App',
+                      'Generated by ZeroTrace - Secure Data Wiping App',
                       style: pw.TextStyle(
                         fontSize: 8,
                         fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.grey600,
+                        color: PdfColors.red,
                       ),
                     ),
                   ],
@@ -241,14 +362,87 @@ class CertificateService {
       ),
     );
 
-    // Save PDF
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await _getCertificatesDirectory();
     final filePath =
         '${directory.path}/certificate_${certificate.certificateId}.pdf';
     final file = File(filePath);
     await file.writeAsBytes(await pdf.save());
 
     return filePath;
+  }
+
+  /// Save certificate and create record (immediate deletion)
+  Future<CertificateRecord?> saveAndRecordCertificate(
+    WipeCertificate certificate,
+    String pdfPath,
+    String jsonPath,
+    List<WipeResult> deletedFiles,
+  ) async {
+    try {
+      final now = DateTime.now();
+      final record = CertificateRecord(
+        id: _uuid.v4(),
+        certificateId: certificate.certificateId,
+        pdfPath: pdfPath,
+        jsonPath: jsonPath,
+        createdAt: certificate.issuedAt,
+        wipedAt: null,
+        deletedAt: now,
+        filesDestroyed: certificate.totalFiles,
+        totalSizeDestroyed: certificate.totalSize,
+        wipeMethod: certificate.wipeMethod,
+        fileNames: deletedFiles.map((f) => f.fileName).toList(),
+        isDelayedDeletion: false,
+      );
+
+      await _certificateStorageService.addCertificateRecord(record);
+      return record;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Save certificate and create record (delayed deletion)
+  Future<CertificateRecord?> saveAndRecordDelayedCertificate(
+    WipeCertificate certificate,
+    String pdfPath,
+    String jsonPath,
+    List<WipedFile> wipedFiles,
+    DateTime wipedAt,
+    DateTime deletedAt,
+  ) async {
+    try {
+      final record = CertificateRecord(
+        id: _uuid.v4(),
+        certificateId: certificate.certificateId,
+        pdfPath: pdfPath,
+        jsonPath: jsonPath,
+        createdAt: certificate.issuedAt,
+        wipedAt: wipedAt,
+        deletedAt: deletedAt,
+        filesDestroyed: certificate.totalFiles,
+        totalSizeDestroyed: certificate.totalSize,
+        wipeMethod: certificate.wipeMethod,
+        fileNames: wipedFiles.map((f) => f.fileName).toList(),
+        isDelayedDeletion: true,
+      );
+
+      await _certificateStorageService.addCertificateRecord(record);
+      return record;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<Directory> _getCertificatesDirectory() async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final certDir = Directory('${appDir.path}/certificates');
+
+    if (!await certDir.exists()) {
+      await certDir.create(recursive: true);
+    }
+
+    return certDir;
   }
 
   pw.Widget _buildPdfInfoRow(String label, String value) {
@@ -258,7 +452,7 @@ class CertificateService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.SizedBox(
-            width: 140,
+            width: 160,
             child: pw.Text(
               label,
               style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
@@ -286,7 +480,6 @@ class CertificateService {
   }
 
   Future<String> _getDeviceInfo() async {
-    // In production, use device_info_plus package
     return 'Android Device';
   }
 

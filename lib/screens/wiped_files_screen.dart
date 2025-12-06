@@ -172,7 +172,7 @@ class _WipedFilesScreenState extends State<WipedFilesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('📁 Wiped Files'),
+        title: const Text('Wiped Files'),
         actions: [
           if (_wipedFiles.isNotEmpty && _selectedIds.isEmpty)
             IconButton(

@@ -117,7 +117,7 @@ class _DecisionScreenState extends State<DecisionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🗑️ Delete or Keep'),
+        title: const Text('Delete or Keep'),
         automaticallyImplyLeading: false,
       ),
       body: _isProcessing
@@ -235,8 +235,8 @@ class _DecisionScreenState extends State<DecisionScreen> {
                           ),
                           subtitle: Text(
                             willDelete
-                                ? '🗑️ Will be DELETED'
-                                : '📁 Will be KEPT (corrupted)',
+                                ? 'Will be DELETED'
+                                : 'Will be KEPT (corrupted)',
                             style: TextStyle(
                               fontSize: 12,
                               color: willDelete

@@ -28,6 +28,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
   String? _pdfPath;
   String? _jsonPath;
   bool _isGenerating = true;
+  bool _isSaved = false;
 
   @override
   void initState() {
@@ -62,6 +63,29 @@ class _CertificateScreenState extends State<CertificateScreen> {
     }
   }
 
+  Future<void> _saveCertificateRecord() async {
+    if (_certificate == null ||
+        _pdfPath == null ||
+        _jsonPath == null ||
+        _isSaved) {
+      return;
+    }
+
+    try {
+      await _certificateService.saveAndRecordCertificate(
+        _certificate!,
+        _pdfPath!,
+        _jsonPath!,
+        widget.deletedFiles,
+      );
+      setState(() {
+        _isSaved = true;
+      });
+    } catch (e) {
+      debugPrint('Error saving certificate record: $e');
+    }
+  }
+
   void _openPdf() {
     if (_pdfPath != null) {
       OpenFile.open(_pdfPath!);
@@ -72,8 +96,9 @@ class _CertificateScreenState extends State<CertificateScreen> {
     if (_pdfPath != null) {
       Share.shareXFiles(
         [XFile(_pdfPath!)],
-        subject: 'Secure Data Wipe Certificate',
+        subject: 'ZeroTrace Certificate - ${_certificate?.certificateId}',
         text:
+            'Data Destruction Certificate\n'
             'Certificate ID: ${_certificate?.certificateId}\n'
             'Files Destroyed: ${_certificate?.totalFiles}\n'
             'Method: ${_certificate?.wipeMethod}',
@@ -90,8 +115,13 @@ class _CertificateScreenState extends State<CertificateScreen> {
     );
   }
 
-  void _goHome() {
-    Navigator.popUntil(context, (route) => route.isFirst);
+  Future<void> _goHome() async {
+    // Save certificate record before going home
+    await _saveCertificateRecord();
+
+    if (mounted) {
+      Navigator.popUntil(context, (route) => route.isFirst);
+    }
   }
 
   String _formatBytes(int bytes) {
@@ -112,9 +142,8 @@ class _CertificateScreenState extends State<CertificateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('📜 Certificate'),
+        title: const Text('Certificate'),
         automaticallyImplyLeading: false,
-        actions: [IconButton(icon: const Icon(Icons.home), onPressed: _goHome)],
       ),
       body: _isGenerating
           ? const Center(
@@ -157,7 +186,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Certificate Card (if files were deleted)
+                  // Certificate Card
                   if (_certificate != null) ...[
                     _buildCertificateCard(),
                     const SizedBox(height: 20),
@@ -193,7 +222,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
                           Expanded(
                             child: Text(
                               'These files are corrupted but not deleted. '
-                              'You can delete them later from the "Wiped Files" section.',
+                              'You can delete them later from the menu.',
                               style: TextStyle(fontSize: 12),
                             ),
                           ),
@@ -232,9 +261,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
                           SizedBox(height: 8),
                           Text(
                             'Certificates are only generated for files '
-                            'that have been both wiped AND deleted.\n\n'
-                            'Your kept files are corrupted but still on device. '
-                            'Delete them to get a certificate.',
+                            'that have been both wiped AND deleted.',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 13),
                           ),
@@ -252,7 +279,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
                           child: ElevatedButton.icon(
                             onPressed: _openPdf,
                             icon: const Icon(Icons.picture_as_pdf),
-                            label: const Text('Open PDF'),
+                            label: const Text('View PDF'),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -270,6 +297,37 @@ class _CertificateScreenState extends State<CertificateScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
+
+                  // Auto-save notice
+                  if (_certificate != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Certificate will be saved automatically when you tap DONE.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 16),
 
                   // Done Button
                   SizedBox(
@@ -347,7 +405,6 @@ class _CertificateScreenState extends State<CertificateScreen> {
         ),
         child: Column(
           children: [
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -363,10 +420,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
                 ),
               ],
             ),
-
             const Divider(height: 30),
-
-            // Certificate Details
             _certificateRow('Certificate ID', _certificate!.certificateId),
             _certificateRow('Issue Date', _formatDate(_certificate!.issuedAt)),
             _certificateRow('Wipe Method', _certificate!.wipeMethod),
@@ -375,10 +429,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
               'Data Destroyed',
               _formatBytes(_certificate!.totalSize),
             ),
-
             const Divider(height: 30),
-
-            // Digital Signature
             const Text(
               'DIGITAL SIGNATURE (SHA-256)',
               style: TextStyle(
