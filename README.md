@@ -232,7 +232,7 @@ dev_dependencies:
 
 | Home Screen | Dark Mode | File Selection |
 |-------------|-------------|-----------------|
-| <img src="assets/howto/ss_home_screen.jpg" alt="Home Screen" width="100" height="210" /> | <img src="assets/howto/ss_storage_access_darkmode.jpg" alt="Manual Counter" width="100" height="210" /> | <img src="assets/howto/ss_select_files.jpg" alt="Auto Counter" width="100" height="210" /> |
+| <img src="assets/howto/ss_home_screen.jpg" alt="Home Screen" width="100" height="210" /> | <img src="assets/howto/ss_storage_access_darkmode.jpg" alt="Dark mode theme" width="100" height="210" /> | <img src="assets/howto/ss_select_files.jpg" alt="File selection screen" width="100" height="210" /> |
 
 </div>
 
@@ -242,7 +242,7 @@ dev_dependencies:
 
 | Wiping Files | Destroying Data | Certificate Generation |
 |-------------|-------------|-----------------|
-| <img src="assets/howto/ss_confirm_wipe.jpg" alt="Home Screen" width="100" height="210" /> | <img src="assets/howto/ss_destroying_data.jpg" alt="Manual Counter" width="100" height="210" /> | <img src="assets/howto/ss_certificate_generated.jpg" alt="Auto Counter" width="100" height="210" /> |
+| <img src="assets/howto/ss_confirm_wipe.jpg" alt="Wiping files" width="100" height="210" /> | <img src="assets/howto/ss_destroying_data.jpg" alt="Destroying data progress screen" width="100" height="210" /> | <img src="assets/howto/ss_certificate_generated.jpg" alt="Generated certificate" width="100" height="210" /> |
 
 </div>
 
@@ -252,7 +252,7 @@ dev_dependencies:
 
 | Certificate Details | Certificate PDF | 
 |-------------|-------------|
-| <img src="assets/howto/ss_delayed_delete.jpg" alt="Home Screen" width="100" height="210" /> | <img src="assets/howto/ss_certificate_pdf.jpg" alt="Manual Counter" width="100" height="210" /> |
+| <img src="assets/howto/ss_delayed_delete.jpg" alt="Certificate details" width="100" height="210" /> | <img src="assets/howto/ss_certificate_pdf.jpg" alt="PDF view of certificate" width="100" height="210" /> |
 
 </div>
 
