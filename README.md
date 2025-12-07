@@ -6,7 +6,7 @@
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.1.0-blue.svg?style=for-the-badge)
 
 **A privacy-first, secure data destruction app built with Flutter that
 makes deleted files unrecoverable.**
@@ -79,9 +79,9 @@ devices, ensuring complete privacy and erasure of their personal data.
 
 ## Direct Download Link
 
-The app .apk file can be downloaded form the below link,
+The app's latest .apk file can be downloaded form the below link,
 
-Download: [ZeroTrace.apk](https://github.com/omhujband/ZeroTrace/releases/download/v2.0.0/ZeroTrace.apk)
+Download: [ZeroTrace.apk](https://github.com/omhujband/ZeroTrace/releases/download/v2.1.0/ZeroTrace.apk)
 
 <br>
 
@@ -226,35 +226,78 @@ dev_dependencies:
 
 ## Screenshots
 
-*Will be added in future*
+### Screens 
+
+<div align="center">
+
+| Home Screen | Dark Mode | File Selection |
+|-------------|-------------|-----------------|
+| <img src="assets/howto/ss_home_screen.jpg" alt="Home Screen" width="100" height="210" /> | <img src="assets/howto/ss_storage_access_darkmode.jpg" alt="Manual Counter" width="100" height="210" /> | <img src="assets/howto/ss_select_files.jpg" alt="Auto Counter" width="100" height="210" /> |
+
+</div>
+
+<br>
+
+<div align="center">
+
+| Wiping Files | Destroying Data | Certificate Generation |
+|-------------|-------------|-----------------|
+| <img src="assets/howto/ss_confirm_wipe.jpg" alt="Home Screen" width="100" height="210" /> | <img src="assets/howto/ss_destroying_data.jpg" alt="Manual Counter" width="100" height="210" /> | <img src="assets/howto/ss_certificate_generated.jpg" alt="Auto Counter" width="100" height="210" /> |
+
+</div>
+
+<br>
+
+<div align="center">
+
+| Certificate Details | Certificate PDF | 
+|-------------|-------------|
+| <img src="assets/howto/ss_delayed_delete.jpg" alt="Home Screen" width="100" height="210" /> | <img src="assets/howto/ss_certificate_pdf.jpg" alt="Manual Counter" width="100" height="210" /> |
+
+</div>
 
 <br>
 
 ## Project Structure
 
 ```
-
-lib/
-├── main.dart                      # App entry point
+├─ assets/
+│  ├─ icon/
+│  │  └─ app_icon.png                 # App launcher icon
+│  └─ howto/                       
+│     └─ (other guide screenshots…)
 │
-├── models
-│   ├── certificate.dart           # Certificate data model
-│   ├── wipe_result.dart           # Wipe result & method models
-│   └── wiped_file.dart            # Wiped file tracking model
-│
-├── services/
-│   ├── certificate_service.dart   # PDF/JSON certificate generation
-│   ├── storage_service.dart       # Local storage for wiped files
-│   └── wipe_service.dart          # Core secure wiping logic
-│
-└── screens/
-    ├── home_screen.dart           # Main screen with file selection
-    ├── file_browser_screen.dart   # Native file browser
-    ├── wipe_progress_screen.dart  # Wiping progress display
-    ├── verification_screen.dart   # Data destruction verification
-    ├── decision_screen.dart       # Delete or keep choice
-    ├── wiped_files_screen.dart    # Manage kept wiped files
-    └── certificate_screen.dart    # Certificate display & sharing
+├─ lib/
+│  ├─ main.dart                       
+│  │
+│  ├─ config/
+│  │  └─ app_themes.dart              # Light/Dark theme definitions
+│  │
+│  ├─ providers/
+│  │  └─ theme_provider.dart          # ThemeMode state management
+│  │
+│  ├─ models/
+│  │  ├─ certificate.dart             # WipeCertificate & WipeResultSummary
+│  │  ├─ certificate_record.dart      # Stored certificate metadata (history)
+│  │  ├─ wipe_result.dart             # WipeResult & WipeMethod definitions
+│  │  └─ wiped_file.dart              # WipedFile model (wiped but not deleted)
+│  │
+│  ├─ services/
+│  │  ├─ certificate_service.dart         # Generate/save certificates (PDF)
+│  │  ├─ certificate_storage_service.dart # Persist & securely delete certificates
+│  │  ├─ storage_service.dart             # Store/load wiped file records
+│  │  ├─ theme_service.dart               # Persist ThemeMode in SharedPreferences
+│  │  └─ wipe_service.dart                # Core secure wiping logic (files)
+│  │
+│  └─ screens/
+│     ├─ home_screen.dart             # Main UI, wipe method selection, drawer
+│     ├─ file_browser_screen.dart     # Custom file browser for selecting files
+│     ├─ wipe_progress_screen.dart    # “Destroying data” progress UI
+│     ├─ verification_screen.dart     # Show that data is corrupted (hex/raw)
+│     ├─ decision_screen.dart         # Delete or keep wiped files
+│     ├─ wiped_files_screen.dart      # Manage wiped-but-kept files
+│     ├─ certificates_screen.dart     # Certificates list, view/share/delete
+│     └─ how_to_use_screen.dart       # Multi-step How To Use guide with tabs
 
 ```
 
@@ -263,8 +306,6 @@ lib/
 ## Future Enhancements
 
 -   Full‑drive wiping (internal + SD card)
-
--   All Certificate management
 
 -   Analytics dashboard (on‑device only)
 
