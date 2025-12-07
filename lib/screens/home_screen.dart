@@ -9,6 +9,7 @@ import 'wiped_files_screen.dart';
 import 'file_browser_screen.dart';
 import 'certificates_screen.dart';
 import 'undeleted_files_screen.dart';
+import 'how_to_use_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -441,8 +442,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             subtitle: 'Learn how to use ZeroTrace',
             onTap: () {
               Navigator.pop(context);
-              // TODO: Navigate to How to Use screen
-              _showSnackBar('How to Use Guide - Coming soon!');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HowToUseScreen()),
+              );
             },
           ),
 
@@ -454,7 +457,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Padding(
             padding: const EdgeInsets.all(20),
             child: Text(
-              'Version 1.0.0',
+              'Version 2.1.0',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
             ),
           ),
