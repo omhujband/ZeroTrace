@@ -6,7 +6,7 @@
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
-![Version](https://img.shields.io/badge/version-2.1.0-blue.svg?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-2.2.0-blue.svg?style=for-the-badge)
 
 **A privacy-first, secure data destruction app built with Flutter that
 makes deleted files unrecoverable.**
@@ -60,6 +60,9 @@ devices, ensuring complete privacy and erasure of their personal data.
 -   📁 **File Browser:** Browse and select files directly from device
     storage.
 
+-   💾 **External Storage Access:** Browse and wipe data from external 
+    devices (e.g. SD Card, Pendrive, etc). 
+
 -   🧪 **Post‑Wipe Verification:** View hex‑level corrupted byte
     output.
 
@@ -81,7 +84,7 @@ devices, ensuring complete privacy and erasure of their personal data.
 
 The app's latest .apk file can be downloaded form the below link,
 
-Download: [ZeroTrace.apk](https://github.com/omhujband/ZeroTrace/releases/download/v2.1.0/ZeroTrace.apk)
+Download: [ZeroTrace.apk](https://github.com/omhujband/ZeroTrace/releases/download/v2.2.0/ZeroTrace.apk)
 
 <br>
 
@@ -104,8 +107,11 @@ flutter run
 ## Prerequisites
 
 -   Flutter SDK (\>=3.x recommended)
+
 -   Android SDK + emulator or physical device
+
 -   Dart SDK (included with Flutter)
+
 -   Required storage permissions on device
 
 <br>
@@ -203,6 +209,7 @@ Used internally for tracking overwrite progress & certificate logging.
 dependencies:
   flutter:
     sdk: flutter
+  external_path: ^2.2.0
   file_picker: ^8.0.0+1        
   permission_handler: ^11.3.1   
   pdf: ^3.10.8
@@ -296,7 +303,9 @@ dev_dependencies:
 │     ├─ verification_screen.dart     # Show that data is corrupted (hex/raw)
 │     ├─ decision_screen.dart         # Delete or keep wiped files
 │     ├─ wiped_files_screen.dart      # Manage wiped-but-kept files
+│     ├─ certificate_screen.dart      # Certificate details, deleted/keep count
 │     ├─ certificates_screen.dart     # Certificates list, view/share/delete
+│     ├─ undeleted_files_screen.dart  # Display wiped but not deleted files 
 │     └─ how_to_use_screen.dart       # Multi-step How To Use guide with tabs
 
 ```
@@ -304,8 +313,6 @@ dev_dependencies:
 <br>
 
 ## Future Enhancements
-
--   Full‑drive wiping (internal + SD card)
 
 -   Analytics dashboard (on‑device only)
 
