@@ -57,6 +57,11 @@ class _HowToUseScreenState extends State<HowToUseScreen> {
       subtitle: 'View, share & securely delete',
     ),
     _HowToStep(
+      id: 'external_strg_id',
+      title: 'External Storage ID',
+      subtitle: 'Accessing external storage devices',
+    ),
+    _HowToStep(
       id: 'cache_notice',
       title: 'Important Notice',
       subtitle: 'Gallery/Photos cache behavior',
@@ -329,6 +334,8 @@ class _HowToUseScreenState extends State<HowToUseScreen> {
         return _buildUndeletedDelayedContent();
       case 'cert_management':
         return _buildCertManagementContent();
+      case 'external_strg_id':
+        return _buildExternalStrgIdContent();
       case 'cache_notice':
         return _buildCacheNoticeContent();
       default:
@@ -379,7 +386,7 @@ class _HowToUseScreenState extends State<HowToUseScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '9. Important Notice – Gallery/Photos Cache',
+          '10. Important Notice – Gallery/Photos Cache',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -406,6 +413,122 @@ class _HowToUseScreenState extends State<HowToUseScreen> {
         const Text(
           'This only removes cached thumbnails inside the gallery app. '
           'Your original file data was already destroyed by ZeroTrace and cannot be recovered.',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExternalStrgIdContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '9. External Storage ID - How to access external storage',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'If your SD card or USB drive does not appear automatically under “Browse Volumes”, '
+          'ZeroTrace lets you manually enter the external storage ID or path and then wipe files from it.',
+        ),
+        const SizedBox(height: 16),
+
+        const Text(
+          'Finding Your External Storage ID',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'The external storage ID is the part you see in the path when viewing folder details in a file manager. '
+          'For example, if the path is:',
+          style: TextStyle(fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          '/storage/BAC4-0F0F/Android',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'monospace',
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'then the external storage ID is:',
+          style: TextStyle(fontSize: 13),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'BAC4-0F0F',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'monospace',
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'To find this on your device:',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        _bullet('Open your file manager app / Google\'s File Manager.'),
+        _bullet('Navigate to your SD card or USB drive.'),
+        _bullet(
+          'At the root of the external storage, long‑press any folder (for example “Android”) and open its details / properties.',
+        ),
+        _bullet('Look at the “Path” or “Location” field.'),
+        _bullet(
+          'Take the part between “/storage/” and the next “/” as the ID (e.g. “BAC4-0F0F”).',
+        ),
+
+        const SizedBox(height: 20),
+
+        const Text(
+          'Using the ID in ZeroTrace',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Once you have the ID, you can tell ZeroTrace where your external storage is:',
+          style: TextStyle(fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        _bullet('Open the file browser (Browse & Select Files).'),
+        _bullet('Scroll down to “Browse Volumes”.'),
+        _bullet('Tap on “Wipe from External Storage”.'),
+        _bullet(
+          'In the dialog, enter either:\n'
+          '  • just the ID (e.g. BAC4-0F0F), or\n'
+          '  • the full path (e.g. /storage/BAC4-0F0F).',
+        ),
+        _bullet(
+          'If the path exists and is accessible, ZeroTrace will open that location and show its folders and files.',
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'You can then select files from that external storage and wipe them in the same way as internal files.',
+          style: TextStyle(fontSize: 13),
+        ),
+
+        const SizedBox(height: 20),
+
+        const Text(
+          'Important',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'The external storage ID is specific to each SD card or USB drive and may change if you '
+          'format the card or use a different one. If ZeroTrace cannot open the path you entered, '
+          'double‑check the ID in your file manager.',
+          style: TextStyle(fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'On some devices and Android versions, access to external storage may still be limited by the system or manufacturer. '
+          'In those cases, even with the correct ID, ZeroTrace may not be able to modify files on the SD card or USB drive.',
+          style: TextStyle(fontSize: 13),
         ),
       ],
     );

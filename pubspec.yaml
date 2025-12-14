@@ -11,6 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  external_path: ^2.2.0
+  # new ones above
   file_picker: ^8.0.0+1        
   permission_handler: ^11.3.1   
   pdf: ^3.10.8
